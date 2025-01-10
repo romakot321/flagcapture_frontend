@@ -1,0 +1,7 @@
+* {
+  /* Global vars */
+  --primary-color: black;
+  --accent-color: #f8a212;
+
+  font-family: sans-serif;
+}
