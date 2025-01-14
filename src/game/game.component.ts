@@ -24,7 +24,7 @@ import { CanvasService } from './services/canvas';
 export class GameComponent {
   route: ActivatedRoute = inject(ActivatedRoute);
   store: Store = inject(Store);
-  gameService: GameService = inject(GameService);
+  gameService: GameService | undefined = undefined;
   canvasService: CanvasService | undefined = undefined;
   roomId = -1;
 
@@ -37,9 +37,15 @@ export class GameComponent {
     if (username == undefined || this.roomId === -1)
       return;
 
+    this.canvasService = new CanvasService(
+      "canvas",
+      () => this.gameService?.buyBot(),
+      () => this.gameService?.buyWall(),
+    );
+    this.gameService = new GameService(this.canvasService);
     this.gameService.authorize(username, this.roomId);
-    this.canvasService = new CanvasService("canvas");
 
+    this.canvasService.start();
     this.tick();
   }
 
@@ -47,8 +53,8 @@ export class GameComponent {
     let ctx = this.canvasService?.newFrame();
 
     if (ctx) {
-      this.gameService.update();
-      this.gameService.draw(ctx);
+      this.gameService?.update();
+      this.gameService?.draw(ctx);
     }
 
     requestAnimationFrame(() => this.tick());
