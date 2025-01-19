@@ -14,7 +14,7 @@ import {RouterModule} from '@angular/router';
     <section class="listing">
       <h2 class="listing-heading">{{ room.name }}</h2>
       <p class="listing-location">{{ room.users.length }} players</p>
-      <a [routerLink]="['/room', room.id]">Play</a>
+      <a [routerLink]="['/room', room.name]">Play</a>
     </section>
   `,
   styleUrl: './room.component.css'
