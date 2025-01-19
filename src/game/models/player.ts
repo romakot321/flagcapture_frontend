@@ -12,6 +12,7 @@ export class Player extends Entity {
 
   constructor(
       private onCoinsChange: onCoinsChange | undefined = undefined,
+      public name: string,
       x: number = 0,
       y: number = 0,
   ) {
@@ -32,37 +33,39 @@ export class Player extends Entity {
     this.applyForce(this.force);
   }
 
-  override onKeyup(key: string): void {
+  override onKeyup(key: string): boolean {
     switch(key) {
       case 'd':
         this.force.x = this.force.x == this.speed ? 0 : this.force.x;
-        break;
+        return true;
       case 'a':
         this.force.x = this.force.x == -this.speed ? 0 : this.force.x;
-        break;
+        return true;
       case 'w':
         this.force.y = this.force.y == -this.speed ? 0 : this.force.y;
-        break;
+        return true;
       case 's':
         this.force.y = this.force.y == this.speed ? 0 : this.force.y;
-        break;
+        return true;
     }
+    return false;
   }
 
-  override onKeydown(key: string): void {
+  override onKeydown(key: string): boolean {
     switch(key) {
       case 'd':
         this.force.x = this.speed;
-        break;
+        return true;
       case 'a':
         this.force.x = -this.speed;
-        break;
+        return true;
       case 'w':
         this.force.y = -this.speed;
-        break;
+        return true;
       case 's':
         this.force.y = this.speed;
-        break;
+        return true;
     }
+    return false;
   }
 }

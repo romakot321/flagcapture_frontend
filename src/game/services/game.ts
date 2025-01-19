@@ -2,11 +2,13 @@ import { Injectable } from '@angular/core';
 import { Wall, Vector, Bot, Player, Entity, Zone } from '../models';
 import { EntityRepository } from '../repositories';
 import { CanvasService, CanvasContextWithViewport } from './canvas';
+import { ConnectionService } from './connection';
 
 class Controller {
   public player: Player | undefined = undefined;
+  private pressedButton: Set<string> = new Set<string>();
 
-  constructor(private entityRepository: EntityRepository) {
+  constructor(private entityRepository: EntityRepository, private connectionService: ConnectionService) {
     this.initHandlers();
   }
 
@@ -26,13 +28,19 @@ class Controller {
   private onKeydown(e: KeyboardEvent): void {
     if (this.player == undefined)
       return;
-    this.player.onKeydown(e.key);
+    if (this.player.onKeydown(e.key) && !this.pressedButton.has(e.key)) {
+      this.connectionService.userInputMove(e.key, false, this.player.pos.x, this.player.pos.y);
+      this.pressedButton.add(e.key);
+    }
   }
 
   private onKeyup(e: KeyboardEvent): void {
     if (this.player == undefined)
       return;
-    this.player.onKeyup(e.key);
+    if (this.player.onKeyup(e.key) && this.pressedButton.has(e.key)) {
+      this.connectionService.userInputMove(e.key, true, this.player.pos.x, this.player.pos.y);
+      this.pressedButton.delete(e.key);
+    }
   }
 
   private onTouchStart(e: TouchEvent): void {
@@ -64,16 +72,19 @@ class Controller {
     }
 
     if (attack != null) {
+      this.connectionService.userInputBot("attack", attack.pos.x, attack.pos.y);
       for (const entity of this.entityRepository.list()) {
         if (entity instanceof Bot && entity.ownerId === this.player?.id)
           entity.attack(attack as Zone);
       }
     } else if (follow != null) {
+      this.connectionService.userInputBot("follow", follow.pos.x, follow.pos.y);
       for (const entity of this.entityRepository.list()) {
         if (entity instanceof Bot && entity.ownerId === this.player?.id)
           entity.follow(follow as Player);
       }
     } else if (defend != null) {
+      this.connectionService.userInputBot("defend", defend.pos.x, defend.pos.y);
       for (const entity of this.entityRepository.list()) {
         if (entity instanceof Bot && entity.ownerId === this.player?.id)
           entity.defend(defend as Zone);
@@ -85,18 +96,21 @@ class Controller {
 @Injectable()
 export class GameService {
   private controller: Controller;
-  private entityRepository: EntityRepository;
   private lastFrame: number = 0;
 
-  constructor(private canvasService: CanvasService) {
-    this.entityRepository = new EntityRepository();
-    this.controller = new Controller(this.entityRepository);
+  constructor(
+      private canvasService: CanvasService,
+      private connectionService: ConnectionService,
+      private entityRepository: EntityRepository,
+  ) {
+    this.controller = new Controller(this.entityRepository, this.connectionService);
   }
 
   authorize(username: string, roomId: number): void {
     console.log("Authorize", username, roomId);
+    this.connectionService.authenticate(username, roomId);
 
-    let player = new Player(this.canvasService.onCoinsChange.bind(this.canvasService));
+    let player = new Player(this.canvasService.onCoinsChange.bind(this.canvasService), username);
     this.controller.player = player;
     player.coins = 20;
     this.entityRepository.store(player);
@@ -104,18 +118,8 @@ export class GameService {
     this.canvasService.setPlayerId(player.id);
 
     this.entityRepository.store(new Zone(200, 200));
-    let zone = new Zone(700, 300, player.id + 1);
+    let zone = new Zone(700, 300, -1);
     this.entityRepository.store(zone);
-
-    for (let i = 0; i < 2; i++) {
-      let bot1 = new Bot(window.innerWidth - (50 + i * Bot.size * 2), 1000, this.entityRepository, player.id + 1);
-      bot1.defend(zone);
-      this.entityRepository.store(bot1);
-    }
-    for (let i = 0; i < 1; i++) {
-      let bot = new Bot(50 + i * Bot.size * 2, window.innerHeight / 2, this.entityRepository, player.id);
-      this.entityRepository.store(bot);
-    }
   }
 
   update() {
@@ -144,8 +148,9 @@ export class GameService {
   }
 
   draw(ctx: CanvasContextWithViewport) {
-    for (const entity of this.entityRepository.list())
+    for (const entity of this.entityRepository.list()) {
       entity.draw(ctx);
+    }
   }
 
   buyBot(): void {
@@ -156,7 +161,9 @@ export class GameService {
     this.controller.player.coins -= 10;
     let bot = new Bot(this.controller.player.pos.x - 1, this.controller.player.pos.y - 1, this.entityRepository, this.controller.player.id);
     this.entityRepository.store(bot);
+    this.connectionService.newEntity('bot', bot.x, bot.y);
   }
+
   buyWall(): void {
     if (!this.controller.player)
       return;
@@ -169,5 +176,6 @@ export class GameService {
       this.controller.player.id
     );
     this.entityRepository.store(wall);
+    this.connectionService.newEntity('wall', wall.x, wall.y);
   }
 }

@@ -5,36 +5,32 @@ import { Room } from '../models/room';
   providedIn: 'root'
 })
 export class RoomService {
-  private roomList: Room[] = [
-    {
-      id: 1,
-      name: "Test room",
-      players: 2,
-    },
-    {
-      id: 2,
-      name: "Test room",
-      players: 2,
-    },
-    {
-      id: 3,
-      name: "Test room",
-      players: 2,
-    },
-    {
-      id: 4,
-      name: "Test room",
-      players: 2,
-    },
-  ];
+  private apiUrl: string;
 
-  constructor() { }
+  constructor() {
+    this.apiUrl = "http://localhost:9000"
+  }
 
-  list(): Room[] {
-    return this.roomList;
+  async list(): Promise<Room[]> {
+    try {
+      const response = await fetch(this.apiUrl + "/api/room");
+      return (await response.json()).filter((el: Room | null) => el != null);
+    } catch (error) {
+      console.error("Error room loading:", error);
+      return [];
+    }
+  }
+
+  async create(name: string): Promise<Room> {
+    const response = await fetch(this.apiUrl + "/api/room", {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({name: name}),
+    });
+    return await response.json();
   }
 
   get(id: number): Room | undefined {
-    return this.roomList.find(room => room.id === id);
+    return undefined;
   }
 }

@@ -22,6 +22,12 @@ import { Store } from '../core/store';
         <button type="submit" class="primary">Apply now</button>
       </div>
     </form>
+    <form [formGroup]="roomForm" (submit)="createRoom()">
+      <div>
+        <input id="name" type="text" placeholder="Room name" formControlName="name">
+        <button type="submit" class="primary">Create room</button>
+      </div>
+    </form>
     <section class="results">
       <app-room *ngFor="let room of roomList" [room]="room"></app-room>
     </section>
@@ -36,12 +42,29 @@ export class HomeComponent {
   authForm = new FormGroup({
     username: new FormControl('')
   });
+  roomForm = new FormGroup({
+    name: new FormControl('')
+  });
 
   constructor() {
-    this.roomList = this.roomService.list();
+    this.roomService.list().then((rooms) => { console.log(rooms); this.roomList = rooms });
+  }
+
+  ngOnInit() {
+    let creds = this.store.getCredentials();
+    if (creds)
+      this.authForm.get('username')?.setValue(creds);
   }
 
   saveCredentials() {
     this.store.setCredentials(this.authForm.value.username ?? undefined);
+  }
+
+  createRoom() {
+    if (!this.roomForm.value.name)
+      return;
+    this.roomService.create(this.roomForm.value.name).then(
+      (room) => { this.roomList.push(room) }
+    );
   }
 }

@@ -104,6 +104,8 @@ export class Entity {
     const relativeVelocity = this.velocity.subtract(other.velocity);
     let speed = relativeVelocity.x * collisionNorm.x + relativeVelocity.y * collisionNorm.y;
 
+    if (isNaN(collisionNorm.x) || isNaN(collisionNorm.y))
+      return;
     this.applyForce(collisionNorm.multiply(-1));
     other.applyForce(collisionNorm.multiply(1));
 
@@ -112,9 +114,9 @@ export class Entity {
     other.pos.y += collisionNorm.y * overlap * 0.5;
   }
 
-  onKeydown(key: string) { }
+  onKeydown(key: string): boolean { return false; }
 
-  onKeyup(key: string) { }
+  onKeyup(key: string): boolean { return false; }
 
   onClick(clickX: number, clickY: number) { }
 }
