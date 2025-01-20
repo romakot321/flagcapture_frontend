@@ -8,7 +8,7 @@ export class RoomService {
   private apiUrl: string;
 
   constructor() {
-    this.apiUrl = "http://localhost:9000"
+    this.apiUrl = "https://walker.eramir.ru"
   }
 
   async list(): Promise<Room[]> {

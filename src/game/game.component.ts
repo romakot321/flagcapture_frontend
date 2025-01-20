@@ -47,7 +47,11 @@ export class GameComponent {
       () => this.gameService?.buyBot(),
       () => this.gameService?.buyWall(),
     );
-    this.connectionService = new ConnectionService(() => this.start(), entityRepository);
+    this.connectionService = new ConnectionService(
+      () => this.start(),
+      entityRepository,
+      "wss://walker.eramir.ru/api/game/ws"
+    );
     this.gameService = new GameService(this.canvasService, this.connectionService, entityRepository);
   }
 
