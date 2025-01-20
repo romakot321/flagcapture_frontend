@@ -15,7 +15,11 @@ class Controller {
   joystickUpdate(x: number, y: number) {
     if (this.player == undefined)
       return;
-    this.player.applyForce(new Vector(x * this.player.speed, y * this.player.speed));
+    let force = new Vector(x * this.player.speed, y * this.player.speed);
+    if (this.player.acceleration.x != force.x || this.player.acceleration.y != force.y) {
+      this.player.applyForce(force);
+      this.connectionService.userInputJoystick(x, y);
+    }
   }
 
   private initHandlers() {

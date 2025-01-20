@@ -3,11 +3,18 @@ import { UsersMessage, isUsersMessage } from '../models';
 import { AuthenticateMessage, isAuthenticateMessage } from '../models';
 import { UserInputMessage, isUserInputMessage } from '../models';
 import { NewEntityMessage, isNewEntityMessage } from '../models';
-import { MoveInputData, BotInputData, userInputExtraIsMove, userInputExtraIsBot } from '../models';
+import {
+  MoveInputData,
+  BotInputData,
+  JoystickInputData,
+  userInputExtraIsMove,
+  userInputExtraIsBot,
+  userInputExtraIsJoystick
+} from '../models';
 import { UserPositionMessage, isUserPositionMessage } from '../models';
 
 import { EntityRepository } from '../repositories';
-import { Entity, Wall, Bot, Player } from '../models';
+import { Entity, Wall, Bot, Player, Vector } from '../models';
 
 
 export class ConnectionService {
@@ -69,7 +76,11 @@ export class ConnectionService {
   }
 
   private handleUserInputMessage(msg: UserInputMessage) {
-    if (userInputExtraIsMove(msg.data.extra))
+    if (this.username == msg.data.username)
+      return;
+    if (msg.data.key == 'joystick' && userInputExtraIsJoystick(msg.data.extra))
+      this.handleUserInputJoystickMessage(msg);
+    else if (userInputExtraIsMove(msg.data.extra))
       this.handleUserInputMoveMessage(msg);
     else if (userInputExtraIsBot(msg.data.extra))
       this.handleUserInputBotMessage(msg);
@@ -94,6 +105,17 @@ export class ConnectionService {
 
     if (model)
       this.entityRepository.store(model);
+  }
+
+  private handleUserInputJoystickMessage(msg: UserInputMessage) {
+    let player = this.entityRepository.getPlayer(msg.data.username);
+    if (!player)
+      return;
+    console.log("move", player.name, msg.data);
+
+    let extra = msg.data.extra as JoystickInputData;
+    let force = new Vector(extra.x * player.speed, extra.y * player.speed);
+    player.applyForce(force);
   }
 
   private handleUserInputMoveMessage(msg: UserInputMessage) {
@@ -176,6 +198,11 @@ export class ConnectionService {
   userInputBot(command: string, clickX: number, clickY: number) {  // X and Y must be in world relation
     let extra: BotInputData = {x: clickX, y: clickY, command: command};
     this.userInput("bot", false, extra);
+  }
+
+  userInputJoystick(x: number, y: number) {
+    let extra: JoystickInputData = {x: x, y: y};
+    this.userInput("joystick", false, extra);
   }
 
   userPosition(x: number, y: number) {

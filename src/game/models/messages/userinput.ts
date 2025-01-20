@@ -12,13 +12,18 @@ export interface BotInputData {
   command: string;
 }
 
+export interface JoystickInputData {
+  x: number;
+  y: number;
+}
+
 export interface UserInputMessage extends BaseMessage {
   event: number;
   data: {
     key: string,
     is_release: boolean,
     username: string,
-    extra: MoveInputData | BotInputData,
+    extra: MoveInputData | BotInputData | JoystickInputData,
   };
 }
 
@@ -34,7 +39,11 @@ export function isUserInputMessage(message: any): message is UserInputMessage {
     typeof message.data.key === "string" &&
     typeof message.data.username === "string" &&
     typeof message.data.extra === "object" &&
-    (userInputExtraIsBot(message.data.extra) || userInputExtraIsMove(message.data.extra))
+    (
+      userInputExtraIsBot(message.data.extra) ||
+      userInputExtraIsMove(message.data.extra) ||
+      userInputExtraIsJoystick(message.data.extra)
+    )
   )
 }
 
@@ -58,5 +67,16 @@ export function userInputExtraIsBot(extra: any): extra is BotInputData {
     typeof extra.x === 'number' &&
     typeof extra.y === 'number' &&
     typeof extra.command === 'string'
+  )
+}
+
+export function userInputExtraIsJoystick(extra: any): extra is JoystickInputData {
+  return (
+    typeof extra === 'object' &&
+    'x' in extra &&
+    'y' in extra &&
+    !('command' in extra) &&
+    typeof extra.x === 'number' &&
+    typeof extra.y === 'number'
   )
 }

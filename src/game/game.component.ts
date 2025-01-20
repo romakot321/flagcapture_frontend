@@ -32,6 +32,8 @@ export class GameComponent {
   connectionService: ConnectionService | undefined = undefined;
   roomId = -1;
 
+
+
   constructor() {
     this.roomId = Number(this.route.snapshot.params['id']);
   }

@@ -47,8 +47,8 @@ export class Entity {
   public collided: boolean = false;
   public isDead: boolean = false;
   public mass: number = 1;
-  protected velocity: Vector = new Vector(0, 0);
-  protected acceleration: Vector = new Vector(0, 0);
+  public velocity: Vector = new Vector(0, 0);
+  public acceleration: Vector = new Vector(0, 0);
 
   static size = 25;
 
